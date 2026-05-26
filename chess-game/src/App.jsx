@@ -43,6 +43,19 @@ function App() {
     return () => clearInterval(interval);
   }, [fen, status, gameStarted]);
 
+  // Lógica de la IA
+  useEffect(() => {
+    if (modo !== 'ia' || status) return;
+    const iaTurn = color === 'white' ? 'b' : 'w';
+    if (gameRef.current.turn() === iaTurn) {
+      const timer = setTimeout(() => {
+        const bestMove = getBestMove(gameRef.current, dificultad);
+        if (bestMove) makeMove(bestMove);
+      }, 800);
+      return () => clearTimeout(timer);
+    }
+  }, [fen, modo, color, dificultad, status]);
+
   function makeMove(move) {
     try {
       const result = gameRef.current.move(move);
@@ -64,7 +77,7 @@ function App() {
         <h1 className="text-2xl font-black text-emerald-500">Chamy Chess Pro</h1>
         <div className={`text-xs ${isConnected ? 'text-emerald-500' : 'text-red-500'}`}>● {isConnected ? 'SERVIDOR ONLINE' : 'CONECTANDO...'}</div>
         
-        <input className="bg-zinc-800 p-2 rounded border border-zinc-700" placeholder="Sala" onChange={(e) => setSala(e.target.value)} />
+        <input className="bg-zinc-800 p-2 rounded border border-zinc-700" placeholder="Nombre de sala" onChange={(e) => setSala(e.target.value)} />
         
         <select className="bg-zinc-800 p-2 rounded border border-zinc-700" onChange={(e) => setModo(e.target.value)}>
           <option value="online">Modo: Online</option>
@@ -85,7 +98,7 @@ function App() {
         </div>
       </div>
 
-      {/* TABLERO */}
+      {/* TABLERO CENTRAL */}
       <div className="w-[500px] aspect-square bg-zinc-900 relative border-4 border-zinc-800 rounded-lg shadow-2xl">
         <Chessboard position={fen} onPieceDrop={(s,t) => makeMove({from: s, to: t, promotion: 'q'})} boardOrientation={color} />
         {status && <div className="absolute inset-0 bg-black/80 flex flex-col items-center justify-center z-10">
@@ -94,7 +107,7 @@ function App() {
         </div>}
       </div>
 
-      {/* HISTORIAL */}
+      {/* HISTORIAL DERECHA */}
       <div className="w-[200px] bg-zinc-900 p-4 rounded-2xl font-mono text-sm overflow-y-auto border border-zinc-800">
         <h3 className="font-bold mb-2 border-b border-zinc-700 pb-1">Historial</h3>
         {history.map((m, i) => <div key={i}>{i%2===0 ? `${i/2+1}. ` : ''}{m}</div>)}
