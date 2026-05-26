@@ -29,6 +29,6 @@ io.on("connection", (socket) => {
 });
 
 // Asegúrate de que el servidor escuche en '0.0.0.0' en lugar de omitirlo
-http.listen(3001, '0.0.0.0', () => {
-  console.log("Servidor activo, puedes acceder desde http://192.168.1.42:3000");
-});
+const PORT = process.env.PORT || 3001;
+// Y asegurate de que tu app escuche en ese puerto:
+server.listen(PORT, () => console.log(`Servidor escuchando en puerto ${PORT}`));
