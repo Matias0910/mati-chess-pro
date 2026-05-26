@@ -4,7 +4,6 @@ import { Chessboard } from 'react-chessboard';
 import { getBestMove } from './engine';
 import io from 'socket.io-client';
 
-// Asegurate de que esta IP sea la 192.168.1.42 de tu PC
 const socket = io(import.meta.env.VITE_API_URL || 'http://localhost:3001');
 
 function App() {
@@ -13,6 +12,17 @@ function App() {
   const [color, setColor] = useState('white');
   const [dificultad, setDificultad] = useState(2);
   const [sala, setSala] = useState('sala1');
+
+  // Detección de fin de partida
+  useEffect(() => {
+    if (game.isGameOver()) {
+      if (game.isCheckmate()) {
+        setTimeout(() => alert("¡Jaque Mate!"), 500);
+      } else if (game.isDraw()) {
+        setTimeout(() => alert("¡Empate!"), 500);
+      }
+    }
+  }, [game.fen()]);
 
   useEffect(() => {
     socket.emit('unirse_partida', { idSala: sala });
@@ -49,15 +59,17 @@ function App() {
 
   function handleUndo() {
     const gameCopy = new Chess(game.fen());
-    gameCopy.undo();
-    if (modo === 'ia') gameCopy.undo();
+    if (modo === 'ia') {
+      gameCopy.undo();
+      gameCopy.undo();
+    } else {
+      gameCopy.undo();
+    }
     setGame(gameCopy);
   }
 
   return (
     <div className="min-h-screen bg-zinc-950 text-white flex flex-col md:flex-row justify-center items-center p-4 md:p-8 gap-8 font-sans">
-      
-      {/* PANEL DE OPCIONES - A LA IZQUIERDA */}
       <div className="w-full max-w-[400px] bg-zinc-900 p-6 rounded-2xl border border-zinc-800 shadow-xl space-y-6">
         <h1 className="text-3xl font-black text-emerald-500">Mati Chess PRO</h1>
         
@@ -96,7 +108,6 @@ function App() {
         </div>
       </div>
 
-      {/* TABLERO - A LA DERECHA */}
       <div className="w-full max-w-[500px] aspect-square border-4 border-zinc-800 rounded-lg shadow-2xl bg-zinc-900">
         <Chessboard 
           position={game.fen()} 
@@ -104,7 +115,6 @@ function App() {
           boardOrientation={color} 
         />
       </div>
-      
     </div>
   );
 }
