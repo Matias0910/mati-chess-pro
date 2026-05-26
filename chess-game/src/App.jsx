@@ -23,9 +23,6 @@ function App() {
   useEffect(() => {
     socket.on('connect', () => setIsConnected(true));
     socket.on('disconnect', () => setIsConnected(false));
-  }, []);
-
-  useEffect(() => {
     socket.emit('unirse_partida', { idSala: sala });
     socket.on('tablero_actualizado', (newFen) => {
       gameRef.current.load(newFen);
@@ -57,63 +54,38 @@ function App() {
     } catch (e) { return false; }
   }
 
-  function onDrop(source, target) {
-    if (status) return false;
-    if (modo === 'online' && gameRef.current.turn() !== (color === 'white' ? 'w' : 'b')) return false;
-    return makeMove({ from: source, to: target, promotion: 'q' });
-  }
-
-  useEffect(() => {
-    if (modo === 'ia' && gameRef.current.turn() !== (color === 'white' ? 'w' : 'b') && !status) {
-      const timer = setTimeout(() => {
-        const bestMove = getBestMove(gameRef.current, dificultad);
-        if (bestMove) makeMove(bestMove);
-      }, 300);
-      return () => clearTimeout(timer);
-    }
-  }, [fen, modo, color, dificultad, status]);
-
-  function handleUndo() {
-    if (status) return;
-    if (modo === 'ia') { gameRef.current.undo(); gameRef.current.undo(); }
-    else { gameRef.current.undo(); }
-    setFen(gameRef.current.fen());
-    setHistory(gameRef.current.history());
-  }
-
   return (
-    <div className="min-h-screen bg-zinc-950 text-white flex flex-col items-center p-4 gap-6 font-sans">
-      <h1 className="text-3xl font-black text-emerald-500">Chamy Chess Pro</h1>
-      
-      <div className={`text-[10px] font-bold ${isConnected ? 'text-emerald-500' : 'text-red-500'}`}>
-        {isConnected ? '● SERVIDOR ONLINE' : '○ CONECTANDO...'}
-      </div>
-
-      <div className="flex gap-4 w-full max-w-[500px]">
-        <input className="bg-zinc-800 p-2 rounded flex-1" placeholder="Sala" onChange={(e) => setSala(e.target.value)} />
+    <div className="min-h-screen bg-zinc-950 text-white flex flex-row p-6 gap-6 justify-center">
+      {/* PANEL IZQUIERDO */}
+      <div className="w-[300px] bg-zinc-900 p-6 rounded-2xl flex flex-col gap-4">
+        <h1 className="text-2xl font-black text-emerald-500">Chamy Chess Pro</h1>
+        <div className={`text-xs ${isConnected ? 'text-emerald-500' : 'text-red-500'}`}>● SERVIDOR ONLINE</div>
+        <input className="bg-zinc-800 p-2 rounded" placeholder="Sala" onChange={(e) => setSala(e.target.value)} />
         <select className="bg-zinc-800 p-2 rounded" onChange={(e) => setModo(e.target.value)}>
           <option value="online">Online</option>
           <option value="ia">Contra IA</option>
         </select>
+        <button className="bg-zinc-700 p-2 rounded" onClick={() => { gameRef.current.undo(); if(modo==='ia') gameRef.current.undo(); setFen(gameRef.current.fen()); }}>Deshacer</button>
+        <button className="bg-red-600 p-2 rounded" onClick={() => { gameRef.current = new Chess(); setFen(gameRef.current.fen()); setStatus(null); }}>Reiniciar</button>
+        <div className="mt-auto font-mono">
+            <div>Blanco: {Math.floor(timerWhite/60)}:{String(timerWhite%60).padStart(2,'0')}</div>
+            <div>Negro: {Math.floor(timerBlack/60)}:{String(timerBlack%60).padStart(2,'0')}</div>
+        </div>
       </div>
 
-      <div className="flex justify-between w-full max-w-[500px] font-mono text-xl">
-        <div className="bg-zinc-800 px-4 py-2 rounded">Bl: {Math.floor(timerWhite/60)}:{String(timerWhite%60).padStart(2,'0')}</div>
-        <div className="bg-zinc-800 px-4 py-2 rounded">Ng: {Math.floor(timerBlack/60)}:{String(timerBlack%60).padStart(2,'0')}</div>
+      {/* TABLERO CENTRAL */}
+      <div className="w-[500px] aspect-square bg-zinc-900 relative">
+        <Chessboard position={fen} onPieceDrop={(s,t) => makeMove({from: s, to: t, promotion: 'q'})} boardOrientation={color} />
+        {status && <div className="absolute inset-0 bg-black/80 flex flex-col items-center justify-center z-10">
+            <h2 className="text-4xl font-black text-emerald-500">JAQUE MATE!</h2>
+            <button className="mt-4 bg-emerald-600 px-6 py-2 rounded-full" onClick={() => window.location.reload()}>Jugar de nuevo</button>
+        </div>}
       </div>
 
-      <div className="w-full max-w-[500px] aspect-square bg-zinc-900 relative">
-        <Chessboard position={fen} onPieceDrop={onDrop} boardOrientation={color} />
-        {status && <div className="absolute inset-0 bg-black/80 flex items-center justify-center text-4xl font-black text-emerald-500 z-10">JAQUE MATE</div>}
-      </div>
-
-      <div className="flex gap-4 w-full max-w-[500px]">
-        <button className="flex-1 bg-zinc-700 p-2 rounded" onClick={handleUndo}>Deshacer</button>
-        <button className="flex-1 bg-red-600 p-2 rounded" onClick={() => { gameRef.current = new Chess(); setFen(gameRef.current.fen()); }}>Reiniciar</button>
-      </div>
-
-      <div className="w-full max-w-[500px] h-20 bg-zinc-900 p-4 rounded overflow-y-auto text-xs font-mono border border-zinc-800">
-        {history.map((m, i) => <span key={i}>{i % 2 === 0 ? `${i/2+1}. ` : ''}{m} </span>)}
+      {/* HISTORIAL DERECHA */}
+      <div className="w-[200px] bg-zinc-900 p-4 rounded-2xl font-mono text-sm overflow-y-auto">
+        <h3 className="font-bold mb-2">Historial</h3>
+        {history.map((m, i) => <div key={i}>{i%2===0 ? `${i/2+1}. ` : ''}{m}</div>)}
       </div>
     </div>
   );
