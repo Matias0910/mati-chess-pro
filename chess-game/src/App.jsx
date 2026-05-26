@@ -43,7 +43,6 @@ function App() {
     return () => clearInterval(interval);
   }, [fen, status, gameStarted]);
 
-  // Lógica de la IA
   useEffect(() => {
     if (modo !== 'ia' || status) return;
     const iaTurn = color === 'white' ? 'b' : 'w';
@@ -89,6 +88,15 @@ function App() {
           <option value="black">Color: Negras</option>
         </select>
 
+        {modo === 'ia' && (
+          <select className="bg-zinc-800 p-2 rounded border border-zinc-700" value={dificultad} onChange={(e) => setDificultad(Number(e.target.value))}>
+            <option value={1}>Dificultad: Principiante</option>
+            <option value={2}>Dificultad: Intermedio</option>
+            <option value={3}>Dificultad: Experto</option>
+            <option value={4}>Dificultad: Maestro</option>
+          </select>
+        )}
+
         <button className="bg-zinc-700 hover:bg-zinc-600 p-2 rounded transition" onClick={() => { gameRef.current.undo(); if(modo==='ia') gameRef.current.undo(); setFen(gameRef.current.fen()); }}>Deshacer</button>
         <button className="bg-red-600 hover:bg-red-500 p-2 rounded transition" onClick={() => window.location.reload()}>Reiniciar</button>
         
@@ -98,7 +106,7 @@ function App() {
         </div>
       </div>
 
-      {/* TABLERO CENTRAL */}
+      {/* TABLERO */}
       <div className="w-[500px] aspect-square bg-zinc-900 relative border-4 border-zinc-800 rounded-lg shadow-2xl">
         <Chessboard position={fen} onPieceDrop={(s,t) => makeMove({from: s, to: t, promotion: 'q'})} boardOrientation={color} />
         {status && <div className="absolute inset-0 bg-black/80 flex flex-col items-center justify-center z-10">
@@ -107,7 +115,7 @@ function App() {
         </div>}
       </div>
 
-      {/* HISTORIAL DERECHA */}
+      {/* HISTORIAL */}
       <div className="w-[200px] bg-zinc-900 p-4 rounded-2xl font-mono text-sm overflow-y-auto border border-zinc-800">
         <h3 className="font-bold mb-2 border-b border-zinc-700 pb-1">Historial</h3>
         {history.map((m, i) => <div key={i}>{i%2===0 ? `${i/2+1}. ` : ''}{m}</div>)}
