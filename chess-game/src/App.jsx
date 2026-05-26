@@ -2,10 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { Chess } from 'chess.js';
 import { Chessboard } from 'react-chessboard';
 import { getBestMove } from './engine';
-import { io } from 'socket.io-client';
+import io from 'socket.io-client';
 
 // Asegurate de que esta IP sea la 192.168.1.42 de tu PC
-const socket = io('http://192.168.1.42:3001');
+const socket = io(import.meta.env.VITE_API_URL || 'http://localhost:3001');
 
 function App() {
   const [game, setGame] = useState(new Chess());
