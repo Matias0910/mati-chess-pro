@@ -1,0 +1,4 @@
+@import "tailwindcss";
+.react-chessboard-promotion-modal {
+  z-index: 100 !important;
+}
