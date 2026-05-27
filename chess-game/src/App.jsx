@@ -4,7 +4,7 @@ import { Chessboard } from 'react-chessboard';
 import { getBestMove } from './engine';
 import io from 'socket.io-client';
 
-const socket = io(import.meta.env.VITE_API_URL || 'http://localhost:3001');
+const socket = io(import.meta.env.VITE_API_URL || 'https://mati-chess-pro.onrender.com');
 
 function App() {
   const gameRef = useRef(new Chess());
