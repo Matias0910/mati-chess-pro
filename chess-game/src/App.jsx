@@ -4,7 +4,11 @@ import { Chessboard } from 'react-chessboard';
 import { getBestMove } from './engine';
 import io from 'socket.io-client';
 
-const socket = io(import.meta.env.VITE_API_URL || 'https://mati-chess-pro.onrender.com');
+const socket = io(import.meta.env.VITE_API_URL || 'https://mati-chess-pro.onrender.com', {
+  transports: ['websocket'], // Forzamos WebSocket
+  reconnection: true,        // Reintentar si se cae
+  reconnectionAttempts: 5
+});
 
 function App() {
   const gameRef = useRef(new Chess());
