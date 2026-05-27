@@ -1,55 +1,67 @@
 import React, { useState, useEffect } from 'react';
-import io from 'socket.io-client';
 import { Chess } from 'chess.js';
 import { Chessboard } from 'react-chessboard';
 import './App.css';
 
-const socket = io('https://mati-chess-pro.onrender.com', { transports: ['websocket'] });
-
 function App() {
   const [game, setGame] = useState(new Chess());
-  const [sala, setSala] = useState('');
-  const [conectado, setConectado] = useState(false);
-  const [boardOrientation, setBoardOrientation] = useState('white');
+  const [dificultad, setDificultad] = useState('Facil');
 
-  useEffect(() => {
-    socket.on('movimiento_recibido', (fen) => setGame(new Chess(fen)));
-  }, []);
+  // Lógica para jugar contra la máquina
+  function hacerMovimientoMaquina() {
+    const g = new Chess(game.fen());
+    const posiblesMovimientos = g.moves();
+    if (posiblesMovimientos.length === 0) return;
+    
+    // Movimiento aleatorio (puedes mejorar esto con una IA real después)
+    const randomMove = posiblesMovimientos[Math.floor(Math.random() * posiblesMovimientos.length)];
+    g.move(randomMove);
+    setGame(g);
+  }
 
   function onDrop(s, t) {
     const g = new Chess(game.fen());
-    if (g.move({ from: s, to: t })) {
+    try {
+      const move = g.move({ from: s, to: t, promotion: 'q' });
+      if (move === null) return false;
       setGame(g);
-      if (conectado) socket.emit('mover_pieza', { idSala: sala, nuevoTablero: g.fen() });
+      
+      // La máquina responde después de un pequeño delay
+      setTimeout(hacerMovimientoMaquina, 500);
       return true;
+    } catch (e) {
+      return false;
     }
-    return false;
+  }
+
+  // Función para retroceder
+  function retroceder() {
+    const g = new Chess(game.fen());
+    g.undo(); // Deshace la última jugada de la máquina
+    g.undo(); // Deshace tu última jugada
+    setGame(g);
   }
 
   return (
     <div className="main-container">
       <div className="top-bar">
-        <button className="neon-btn" onClick={() => alert('Opciones')}>Opciones</button>
+        <select onChange={(e) => setDificultad(e.target.value)} className="neon-btn">
+          <option>Facil</option>
+          <option>Medio</option>
+          <option>Dificil</option>
+        </select>
+        <button className="neon-btn" onClick={retroceder}>Retroceder</button>
         <button className="neon-btn" onClick={() => setGame(new Chess())}>Nuevo Juego</button>
-        <button className="neon-btn" onClick={() => alert('Tablero por defecto')}>Cambiar Tablero</button>
-        <button className="neon-btn" onClick={() => setBoardOrientation(boardOrientation === 'white' ? 'black' : 'white')}>
-          Intercambiar Colores
-        </button>
-        <button className="neon-btn" onClick={() => alert('Historial vacío')}>Historial</button>
       </div>
 
       <div className="game-wrapper">
         <div className="side-panel">
           <h3>Mati Chess Pro</h3>
-          <p>Conexión</p>
-          <input type="text" placeholder="Nombre de la sala" onChange={(e) => setSala(e.target.value)} />
-          <button className="action-btn" onClick={() => { socket.emit("join_sala", sala); setConectado(true); }}>Unirse a Partida</button>
-          <button className="action-btn" onClick={() => setGame(new Chess())}>Reiniciar Tablero</button>
-          {conectado && <p className="status">✅ Conectado a: {sala}</p>}
+          <p>Dificultad: {dificultad}</p>
         </div>
 
         <div className="board-container">
-          <Chessboard position={game.fen()} boardOrientation={boardOrientation} onPieceDrop={onDrop} />
+          <Chessboard position={game.fen()} onPieceDrop={onDrop} />
         </div>
       </div>
     </div>
