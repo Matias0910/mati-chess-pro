@@ -2,12 +2,14 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Chess } from 'chess.js';
 import { Chessboard } from 'react-chessboard';
 import { getBestMove } from './engine';
+// Asegurate de tener esto arriba en App.jsx
 import io from 'socket.io-client';
 
-const socket = io(import.meta.env.VITE_API_URL || 'https://mati-chess-pro.onrender.com', {
-  transports: ['websocket'], // Forzamos WebSocket
-  reconnection: true,        // Reintentar si se cae
-  reconnectionAttempts: 5
+// Configuración recomendada para evitar fallos de conexión en móviles
+const socket = io('https://mati-chess-pro.onrender.com', {
+  transports: ['websocket'], // Obligamos a WebSocket, sin polling
+  secure: true,              // Necesario porque es HTTPS
+  rejectUnauthorized: false
 });
 
 function App() {
