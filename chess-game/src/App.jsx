@@ -10,6 +10,7 @@ function App() {
   const [game, setGame] = useState(new Chess());
   const [sala, setSala] = useState('');
   const [conectado, setConectado] = useState(false);
+  const [boardOrientation, setBoardOrientation] = useState('white');
 
   useEffect(() => {
     socket.on('movimiento_recibido', (fen) => setGame(new Chess(fen)));
@@ -28,11 +29,13 @@ function App() {
   return (
     <div className="main-container">
       <div className="top-bar">
-        <button className="neon-btn">Opciones</button>
+        <button className="neon-btn" onClick={() => alert('Opciones')}>Opciones</button>
         <button className="neon-btn" onClick={() => setGame(new Chess())}>Nuevo Juego</button>
-        <button className="neon-btn">Cambiar Tablero</button>
-        <button className="neon-btn">Intercambiar Colores</button>
-        <button className="neon-btn">Historial</button>
+        <button className="neon-btn" onClick={() => alert('Tablero por defecto')}>Cambiar Tablero</button>
+        <button className="neon-btn" onClick={() => setBoardOrientation(boardOrientation === 'white' ? 'black' : 'white')}>
+          Intercambiar Colores
+        </button>
+        <button className="neon-btn" onClick={() => alert('Historial vacío')}>Historial</button>
       </div>
 
       <div className="game-wrapper">
@@ -40,13 +43,13 @@ function App() {
           <h3>Mati Chess Pro</h3>
           <p>Conexión</p>
           <input type="text" placeholder="Nombre de la sala" onChange={(e) => setSala(e.target.value)} />
-          <button onClick={() => { socket.emit("join_sala", sala); setConectado(true); }}>Unirse a Partida</button>
-          <button onClick={() => setGame(new Chess())}>Reiniciar Tablero</button>
-          {conectado && <p className="status">✅ Conectado: {sala}</p>}
+          <button className="action-btn" onClick={() => { socket.emit("join_sala", sala); setConectado(true); }}>Unirse a Partida</button>
+          <button className="action-btn" onClick={() => setGame(new Chess())}>Reiniciar Tablero</button>
+          {conectado && <p className="status">✅ Conectado a: {sala}</p>}
         </div>
 
         <div className="board-container">
-          <Chessboard position={game.fen()} onPieceDrop={onDrop} />
+          <Chessboard position={game.fen()} boardOrientation={boardOrientation} onPieceDrop={onDrop} />
         </div>
       </div>
     </div>
