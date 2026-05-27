@@ -8,7 +8,7 @@ const socket = io(import.meta.env.VITE_API_URL || 'http://localhost:3001');
 
 function App() {
   const gameRef = useRef(new Chess());
-  const intervalRef = useRef(null); // Ref para que el reloj no se pierda
+  const intervalRef = useRef(null);
   const [fen, setFen] = useState(gameRef.current.fen());
   const [history, setHistory] = useState([]);
   const [timerWhite, setTimerWhite] = useState(600);
@@ -21,7 +21,6 @@ function App() {
   const [dificultad, setDificultad] = useState(2);
   const [sala, setSala] = useState('sala-general');
 
-  // Lógica del reloj (inmune a re-renders)
   useEffect(() => {
     if (gameStarted && !status) {
       intervalRef.current = setInterval(() => {
@@ -34,7 +33,6 @@ function App() {
     return () => clearInterval(intervalRef.current);
   }, [gameStarted, status]);
 
-  // IA Logic
   useEffect(() => {
     if (modo !== 'ia' || status) return;
     const iaTurn = color === 'white' ? 'b' : 'w';
@@ -72,15 +70,26 @@ function App() {
     <div className="min-h-screen bg-zinc-950 text-white flex flex-row p-6 gap-6 justify-center font-sans">
       <div className="w-[300px] bg-zinc-900 p-6 rounded-2xl flex flex-col gap-4 border border-zinc-800">
         <h1 className="text-2xl font-black text-emerald-500">Chamy Chess Pro</h1>
-        <input className="bg-zinc-800 p-2 rounded" placeholder="Sala" onChange={(e) => setSala(e.target.value)} />
-        <select className="bg-zinc-800 p-2 rounded" onChange={(e) => setModo(e.target.value)}>
+        <input className="bg-zinc-800 p-2 rounded border border-zinc-700" placeholder="Nombre de sala" onChange={(e) => setSala(e.target.value)} />
+        <select className="bg-zinc-800 p-2 rounded border border-zinc-700" onChange={(e) => setModo(e.target.value)}>
           <option value="online">Modo: Online</option>
           <option value="ia">Modo: Contra IA</option>
         </select>
-        <button className="bg-zinc-700 p-2 rounded" onClick={handleUndo}>Deshacer Movimiento</button>
-        <button className="bg-red-600 p-2 rounded" onClick={() => window.location.reload()}>Reiniciar</button>
+        <select className="bg-zinc-800 p-2 rounded border border-zinc-700" value={color} onChange={(e) => setColor(e.target.value)}>
+          <option value="white">Color: Blancas</option>
+          <option value="black">Color: Negras</option>
+        </select>
+        {modo === 'ia' && (
+          <select className="bg-zinc-800 p-2 rounded border border-zinc-700" value={dificultad} onChange={(e) => setDificultad(Number(e.target.value))}>
+            <option value={1}>Principiante</option>
+            <option value={2}>Intermedio</option>
+            <option value={3}>Experto</option>
+          </select>
+        )}
+        <button className="bg-zinc-700 p-2 rounded hover:bg-zinc-600 transition" onClick={handleUndo}>Deshacer Movimiento</button>
+        <button className="bg-red-600 p-2 rounded hover:bg-red-500 transition" onClick={() => window.location.reload()}>Reiniciar</button>
         
-        <div className="mt-auto bg-zinc-950 p-4 rounded font-mono">
+        <div className="mt-auto bg-zinc-950 p-4 rounded font-mono border border-zinc-800">
           <div className="text-zinc-500 text-[10px] mb-1">RELOJ DE PARTIDA</div>
           <div className="flex justify-between text-xl">
              <span>Bl: {Math.floor(timerWhite/60)}:{String(timerWhite%60).padStart(2,'0')}</span>
@@ -91,11 +100,11 @@ function App() {
 
       <div className="w-[500px] aspect-square bg-zinc-900 border-4 border-zinc-800 rounded-lg relative">
         <Chessboard position={fen} onPieceDrop={(s,t) => makeMove({from: s, to: t, promotion: 'q'})} boardOrientation={color} />
-        {status && <div className="absolute inset-0 bg-black/80 flex items-center justify-center text-4xl text-emerald-500 font-bold">JAQUE MATE</div>}
+        {status && <div className="absolute inset-0 bg-black/80 flex items-center justify-center text-4xl text-emerald-500 font-bold z-10">JAQUE MATE</div>}
       </div>
 
       <div className="w-[200px] bg-zinc-900 p-4 rounded-2xl font-mono text-sm overflow-y-auto border border-zinc-800">
-        <h3 className="font-bold mb-2">Historial</h3>
+        <h3 className="font-bold mb-2 border-b border-zinc-700 pb-1">Historial</h3>
         {history.map((m, i) => <div key={i}>{i%2===0 ? `${i/2+1}. ` : ''}{m}</div>)}
       </div>
     </div>
