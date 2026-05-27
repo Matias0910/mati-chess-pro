@@ -29,40 +29,44 @@ function App() {
   }
 
   return (
-    <div style={{ backgroundColor: '#2d2d2d', minHeight: '100vh', color: 'white', padding: '20px', display: 'flex', flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: '30px' }}>
+    <div style={{ backgroundColor: '#121212', minHeight: '100vh', color: 'white', padding: '20px', fontFamily: 'sans-serif' }}>
       
-      {/* TABLERO (El protagonista) */}
-      <div style={{ width: '90vw', maxWidth: '500px' }}>
-        <Chessboard position={game.fen()} onPieceDrop={onDrop} />
+      {/* Barra de Botones Superior */}
+      <div style={{ display: 'flex', gap: '10px', marginBottom: '20px', justifyContent: 'center', flexWrap: 'wrap' }}>
+        <button style={btnStyle}>Opciones</button>
+        <button style={btnStyle} onClick={() => setGame(new Chess())}>Nuevo Juego</button>
+        <button style={btnStyle}>Cambiar Tablero</button>
+        <button style={btnStyle}>Intercambiar Colores</button>
+        <button style={btnStyle}>Historial</button>
       </div>
 
-      {/* PANEL DE OPCIONES (Al lado) */}
-      <div style={{ background: '#383838', padding: '20px', borderRadius: '10px', width: '300px', height: 'fit-content' }}>
-        <h2>Mati Chess Pro</h2>
+      {/* Contenedor Principal */}
+      <div style={{ display: 'flex', gap: '30px', justifyContent: 'center', flexWrap: 'wrap', alignItems: 'flex-start' }}>
         
-        {/* Aquí van tus opciones de sala */}
-        <div style={{ marginBottom: '20px', borderBottom: '1px solid #555', paddingBottom: '15px' }}>
-          <h3>Conexión</h3>
-          {!conectado ? (
-            <div>
-              <input type="text" placeholder="Nombre de la sala" onChange={(e) => setSala(e.target.value)} style={{ padding: '8px', width: '100%', boxSizing: 'border-box' }} />
-              <button onClick={() => { socket.emit("join_sala", sala); setConectado(true); }} style={{ marginTop: '10px', width: '100%', padding: '8px' }}>Unirse a Partida</button>
-            </div>
-          ) : (
-            <p style={{ color: '#4caf50' }}>✅ Conectado: <b>{sala}</b></p>
-          )}
+        {/* Tablero */}
+        <div style={{ width: '90vw', maxWidth: '500px' }}>
+          <Chessboard position={game.fen()} onPieceDrop={onDrop} />
         </div>
 
-        {/* AQUÍ VAN LAS OTRAS OPCIONES QUE TENÍAS ANTES */}
-        <div>
-          <h3>Opciones</h3>
-          <button onClick={() => setGame(new Chess())} style={{ width: '100%', padding: '10px' }}>Reiniciar Tablero</button>
-          {/* Pegá aquí cualquier otro botón que solías tener */}
+        {/* Panel de Sala */}
+        <div style={{ background: '#1e1e1e', padding: '20px', borderRadius: '10px', width: '280px', border: '1px solid #444' }}>
+          <h2 style={{ marginTop: 0 }}>Mati Chess Pro</h2>
+          <div style={{ marginBottom: '15px' }}>
+            {!conectado ? (
+              <div>
+                <input type="text" placeholder="Nombre de la sala" onChange={(e) => setSala(e.target.value)} style={{ width: '100%', padding: '8px', marginBottom: '10px', background: '#333', color: 'white', border: 'none' }} />
+                <button onClick={() => { socket.emit("join_sala", sala); setConectado(true); }} style={{ width: '100%', padding: '10px', cursor: 'pointer' }}>Unirse a Partida</button>
+              </div>
+            ) : (
+              <p style={{ color: '#00e676' }}>✅ Conectado a: <b>{sala}</b></p>
+            )}
+          </div>
         </div>
       </div>
-      
     </div>
   );
 }
+
+const btnStyle = { padding: '10px 15px', cursor: 'pointer', background: '#333', color: 'white', border: '1px solid #555', borderRadius: '5px' };
 
 export default App;
