@@ -37,16 +37,20 @@ function App() {
     // Añadimos transports para evitar problemas de polling en algunos navegadores/hostings
     socketRef.current = io(SOCKET_SERVER_URL, {
       transports: ['websocket'],
-      upgrade: false,
+      // upgrade: false, // Permitir que Socket.IO intente actualizar a WebSocket si es necesario
       forceNew: true // Asegura una nueva conexión completamente independiente
     });
 
     socketRef.current.on('connect', () => {
       console.log('✅ Conectado al servidor con ID:', socketRef.current.id);
       setConnectionStatus('Conectado');
+      // console.log('Current socket instance:', socketRef.current); // Para depuración avanzada
     });
 
-    socketRef.current.on('disconnect', () => setConnectionStatus('Desconectado (Reintentando...)'));
+    socketRef.current.on('disconnect', (reason) => {
+      console.log('❌ Desconectado del servidor. Razón:', reason);
+      setConnectionStatus('Desconectado (Reintentando...)');
+    });
     
     socketRef.current.on('movimiento_recibido', (fen) => {
       console.log('📥 Movimiento recibido desde el oponente:', fen);
