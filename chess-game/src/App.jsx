@@ -36,9 +36,9 @@ function App() {
   useEffect(() => {
     // Añadimos transports para evitar problemas de polling en algunos navegadores/hostings
     socketRef.current = io(SOCKET_SERVER_URL, {
-      transports: ['websocket'],
-      // upgrade: false, // Permitir que Socket.IO intente actualizar a WebSocket si es necesario
-      forceNew: true // Asegura una nueva conexión completamente independiente
+      transports: ['polling', 'websocket'], // Permitimos polling primero para mayor compatibilidad
+      reconnection: true,
+      reconnectionAttempts: 5
     });
 
     socketRef.current.on('connect', () => {
@@ -122,6 +122,11 @@ function App() {
     socketRef.current.emit('join_sala', roomId);
     console.log('🔌 Intento de unión a sala:', roomId);
     setConnectionStatus(`Unido a sala ${roomId}`);
+  }
+
+  function handleCopyRoomId() {
+    navigator.clipboard.writeText(roomId);
+    alert("ID de sala copiado!");
   }
 
   function onDrop(sourceSquare, targetSquare) {
@@ -208,11 +213,13 @@ function App() {
               placeholder="ID de sala"
               onChange={(e) => setRoomId(e.target.value)}
             />
-            <button className="neon-btn" onClick={handleCreateRoom}>Crear sala</button>
-            <button className="neon-btn" onClick={handleJoinRoom}>Unirse</button>
+            <button className="neon-btn" onClick={handleCreateRoom}>Crear</button>
+            <button className="neon-btn" onClick={handleJoinRoom}>Unir</button>
           </div>
-          <p className="connection-status">{connectionStatus}</p>
-          <p className="connection-status">{`Color: ${playerColor === 'white' ? 'Blancas' : 'Negras'}`}</p>
+          <div className="connection-status">
+            <p>{connectionStatus} {roomId && <span onClick={handleCopyRoomId} style={{cursor: 'pointer', textDecoration: 'underline'}}> (Copiar ID)</span>}</p>
+            <p>{`Color: ${playerColor === 'white' ? 'Blancas' : 'Negras'}`}</p>
+          </div>
         </div>
       )}
 
