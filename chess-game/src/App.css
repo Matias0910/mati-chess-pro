@@ -49,7 +49,7 @@ body {
   color: #c2f7ff;
 }
 
-.game-wrapper { display: flex; gap: 30px; flex-wrap: wrap; justify-content: center; align-items: flex-start; }
+.game-wrapper { display: flex; gap: 20px; flex-wrap: wrap; justify-content: center; align-items: flex-start; }
 
 .side-panel {
   background: rgba(0, 0, 0, 0.8);
@@ -90,4 +90,18 @@ body {
   font-size: 0.95rem;
 }
 
-.board-container { width: 490px; background: rgba(0,0,0,0.3); padding: 5px; border-radius: 5px; box-shadow: 0 0 20px rgba(0, 212, 255, 0.2); }
+.board-container { 
+  max-width: 490px; 
+  width: fit-content;
+  background: rgba(0,0,0,0.3); 
+  padding: 5px; 
+  border-radius: 5px; 
+  box-shadow: 0 0 20px rgba(0, 212, 255, 0.2); 
+}
+
+@media (max-width: 600px) {
+  .side-panel {
+    width: 90vw;
+    order: 2; /* Pone el panel de info debajo del tablero en móvil */
+  }
+}
