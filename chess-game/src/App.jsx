@@ -37,7 +37,8 @@ function App() {
     // Añadimos transports para evitar problemas de polling en algunos navegadores/hostings
     socketRef.current = io(SOCKET_SERVER_URL, {
       transports: ['websocket'],
-      upgrade: false
+      upgrade: false,
+      forceNew: true // Asegura una nueva conexión completamente independiente
     });
 
     socketRef.current.on('connect', () => {
