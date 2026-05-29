@@ -21,16 +21,34 @@ function App() {
   const [playerColor, setPlayerColor] = useState('white');
   const [isOnline, setIsOnline] = useState(false);
   const [connectionStatus, setConnectionStatus] = useState('Desconectado');
+  const [boardWidth, setBoardWidth] = useState(window.innerWidth > 600 ? 480 : window.innerWidth - 40);
+
+  useEffect(() => {
+    const handleResize = () => {
+      // Si es pantalla grande 480px, si es móvil el ancho de la pantalla menos margen
+      setBoardWidth(window.innerWidth > 600 ? 480 : window.innerWidth - 40);
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   useEffect(() => {
     // Añadimos transports para evitar problemas de polling en algunos navegadores/hostings
     socketRef.current = io(SOCKET_SERVER_URL, {
-      transports: ['websocket']
+      transports: ['websocket'],
+      upgrade: false
     });
 
-    socketRef.current.on('connect', () => setConnectionStatus('Conectado'));
+    socketRef.current.on('connect', () => {
+      console.log('✅ Conectado al servidor con ID:', socketRef.current.id);
+      setConnectionStatus('Conectado');
+    });
+
     socketRef.current.on('disconnect', () => setConnectionStatus('Desconectado (Reintentando...)'));
+    
     socketRef.current.on('movimiento_recibido', (fen) => {
+      console.log('📥 Movimiento recibido desde el oponente:', fen);
       const g = new Chess(fen);
       setGame(g);
     });
@@ -90,12 +108,14 @@ function App() {
     const newRoom = Math.random().toString(36).slice(2, 9);
     setRoomId(newRoom);
     socketRef.current.emit('join_sala', newRoom);
+    console.log('🏠 Sala creada y emitida:', newRoom);
     setConnectionStatus(`Sala creada: ${newRoom}`);
   }
 
   function handleJoinRoom() {
     if (!socketRef.current || !roomId) return;
     socketRef.current.emit('join_sala', roomId);
+    console.log('🔌 Intento de unión a sala:', roomId);
     setConnectionStatus(`Unido a sala ${roomId}`);
   }
 
@@ -109,6 +129,7 @@ function App() {
     setGame(g);
 
     if (isOnline && socketRef.current && roomId) {
+      console.log('📤 Enviando movimiento a la sala:', roomId);
       socketRef.current.emit('mover_pieza', { idSala: roomId, nuevoTablero: g.fen() });
     } else if (!isOnline) {
       setTimeout(() => {
@@ -208,7 +229,7 @@ function App() {
           <Chessboard
             position={game.fen()}
             onPieceDrop={onDrop}
-            boardWidth={480}
+            boardWidth={boardWidth}
             boardOrientation={playerColor}
           />
         </div>
