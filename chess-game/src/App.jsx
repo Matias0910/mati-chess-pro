@@ -5,8 +5,10 @@ import { getBestMove } from './engine.js';
 import { io } from 'socket.io-client';
 import './App.css';
 
-// Cambia esta URL por la que te dé Render o el servicio que uses
-const SOCKET_SERVER_URL = 'https://mati-chess-pro.onrender.com'; // <--- TU URL REAL AQUÍ
+// Detecta automáticamente si estás en local o en producción
+const SOCKET_SERVER_URL = window.location.hostname === "localhost" 
+  ? "http://localhost:3001" 
+  : "https://mati-chess-pro.onrender.com";
 
 function App() {
   const [game, setGame] = useState(() => new Chess());
@@ -21,13 +23,21 @@ function App() {
   const [connectionStatus, setConnectionStatus] = useState('Desconectado');
 
   useEffect(() => {
-    socketRef.current = io(SOCKET_SERVER_URL);
+    // Añadimos transports para evitar problemas de polling en algunos navegadores/hostings
+    socketRef.current = io(SOCKET_SERVER_URL, {
+      transports: ['websocket']
+    });
 
     socketRef.current.on('connect', () => setConnectionStatus('Conectado'));
-    socketRef.current.on('disconnect', () => setConnectionStatus('Desconectado'));
+    socketRef.current.on('disconnect', () => setConnectionStatus('Desconectado (Reintentando...)'));
     socketRef.current.on('movimiento_recibido', (fen) => {
       const g = new Chess(fen);
       setGame(g);
+    });
+
+    // Capturar errores para saber qué está pasando realmente
+    socketRef.current.on('connect_error', (err) => {
+      setConnectionStatus(`Error: ${err.message}`);
     });
 
     return () => {
