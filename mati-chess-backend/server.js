@@ -14,24 +14,24 @@ const io = new Server(server, {
 });
 
 io.on('connection', (socket) => {
-  console.log('Usuario conectado:', socket.id);
+  console.log('🚀 NUEVA CONEXIÓN DETECTADA - ID:', socket.id);
 
   // El usuario se une a una sala específica
   socket.on('join_sala', (idSala) => {
     socket.join(idSala);
-    console.log(`Usuario ${socket.id} se unió a la sala: ${idSala}`);
+    console.log(`🏠 SALA: Usuario ${socket.id} se unió a [${idSala}]`);
   });
 
   // Recibe el movimiento de un celular y lo envía al otro
   socket.on('mover_pieza', (data) => {
     // data debe tener { idSala, nuevoTablero }
-    console.log('Movimiento en sala:', data.idSala);
+    console.log('📦 MOVIMIENTO RECIBIDO en sala:', data.idSala);
     // Enviamos a todos en la sala EXCEPTO al que hizo el movimiento
     socket.to(data.idSala).emit('movimiento_recibido', data.nuevoTablero);
   });
 
   socket.on('disconnect', () => {
-    console.log('Usuario desconectado:', socket.id);
+    console.log('❌ USUARIO DESCONECTADO - ID:', socket.id);
   });
 });
 
