@@ -8,9 +8,11 @@ const server = http.createServer(app);
 // Configuración de CORS para que tu frontend en Vercel pueda conectar
 const io = new Server(server, {
   cors: {
-    origin: "*", 
+    origin: "*",
     methods: ["GET", "POST"]
-  }
+  },
+  pingInterval: 20000, // El servidor envía un ping cada 20 segundos
+  pingTimeout: 30000   // El servidor espera 30 segundos por un pong
 });
 
 io.on('connection', (socket) => {

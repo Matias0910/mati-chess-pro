@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Chess } from 'chess.js';
 import { Chessboard } from 'react-chessboard';
+import ErrorBoundary from './ErrorBoundary'; // Importa el ErrorBoundary
 import { getBestMove } from './engine.js';
 import { io } from 'socket.io-client';
 import './App.css';
@@ -38,7 +39,9 @@ function App() {
     socketRef.current = io(SOCKET_SERVER_URL, {
       transports: ['polling', 'websocket'], // Permitimos polling primero para mayor compatibilidad
       reconnection: true,
-      reconnectionAttempts: 5
+      reconnectionAttempts: 5,
+      pingInterval: 20000, // El cliente envía un ping cada 20 segundos
+      pingTimeout: 30000   // El cliente espera 30 segundos por un pong
     });
 
     socketRef.current.on('connect', () => {
@@ -170,7 +173,9 @@ function App() {
   }
 
   return (
-    <div className="main-container">
+    // Envuelve tu aplicación con el ErrorBoundary
+    <ErrorBoundary>
+      <div className="main-container">
       <div className="top-bar">
         <select
           className="neon-btn"
@@ -247,6 +252,7 @@ function App() {
         </div>
       </div>
     </div>
+    </ErrorBoundary>
   );
 }
 
