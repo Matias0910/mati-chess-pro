@@ -14,22 +14,26 @@ const io = new Server(server, {
     origin: "*", // Permite conexiones desde cualquier lugar (Vercel, Local, etc.)
     methods: ["GET", "POST"]
   },
-  pingInterval: 20000, // El servidor envía un ping cada 20 segundos
-  pingTimeout: 30000   // El servidor espera 30 segundos por un pong
+  pingInterval: 10000, // Pings más frecuentes para mantener viva la conexión en redes móviles
+  pingTimeout: 20000
 });
 
 io.on('connection', (socket) => {
-  console.log('🚀 NUEVA CONEXIÓN DETECTADA - ID:', socket.id);
+  console.log(`🚀 Jugador conectado: ${socket.id} (Total: ${io.engine.clientsCount})`);
 
   // El usuario se une a una sala específica
   socket.on('join_sala', (idSala) => {
+    if (!idSala) return console.error("❌ Intento de unión sin ID de sala");
     socket.join(idSala);
-    console.log(`🏠 SALA: Usuario ${socket.id} se unió a [${idSala}]`);
+    console.log(`🏠 Sala [${idSala}]: ${socket.id} se ha unido.`);
   });
 
   // Recibe el movimiento y lo reenvía a los demás en la sala
   socket.on('mover_pieza', (data) => {
-    if (!data || !data.idSala || !data.nuevoTablero) return;
+    if (!data || !data.idSala || !data.nuevoTablero) {
+      console.error("⚠️ Datos de movimiento inválidos:", data);
+      return;
+    }
     const { idSala, nuevoTablero } = data;
 
     console.log(`📦 MOVIMIENTO RECIBIDO - Sala: ${idSala} - Enviando a otros...`);
@@ -45,5 +49,5 @@ io.on('connection', (socket) => {
 const PORT = process.env.PORT || 3001;
 
 server.listen(PORT, () => {
-  console.log(`Servidor de ajedrez corriendo en puerto ${PORT}`);
+  console.log(`✅ SERVIDOR ACTIVO en puerto ${PORT} - Esperando jugadores...`);
 });

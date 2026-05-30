@@ -4,7 +4,7 @@ export function getBestMove(game, dificultad) {
 
   const totalPieces = game.board().flat().filter(p => p !== null).length;
   // Profundidad dinámica: más profundo si hay pocas piezas
-  let depth = dificultad === 4 ? (totalPieces < 15 ? 5 : 4) : 2;
+  let depth = dificultad === 4 ? (totalPieces < 12 ? 4 : 3) : 2;
   if (dificultad === 1) return moves[Math.floor(Math.random() * moves.length)];
 
   return minimaxRoot(game, depth, game.turn() === 'w');
@@ -86,19 +86,17 @@ function evaluateBoard(game) {
   let score = 0;
   const board = game.board();
 
-  board.forEach((row, i) => {
-    row.forEach((p, j) => {
+  for (let i = 0; i < 8; i++) {
+    for (let j = 0; j < 8; j++) {
+      const p = board[i][j];
       if (p) {
         let baseValue = values[p.type];
-        
-        // Añadir bono por posición si existe en la tabla (ej. peones y caballos)
         if (weights[p.type]) {
           baseValue += (p.color === 'w' ? weights[p.type][i][j] : weights[p.type][7 - i][j]);
         }
-
         score += (p.color === 'w' ? baseValue : -baseValue);
       }
-    });
-  });
+    }
+  }
   return score;
 }

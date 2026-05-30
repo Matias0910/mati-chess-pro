@@ -40,7 +40,7 @@ function App() {
   const [roomId, setRoomId] = useState('');
   const [playerColor, setPlayerColor] = useState('white');
   const [isOnline, setIsOnline] = useState(false);
-  const [connectionStatus, setConnectionStatus] = useState('Desconectado');
+  const [connectionStatus, setConnectionStatus] = useState('Esperando conexión...');
   const [boardWidth, setBoardWidth] = useState(window.innerWidth > 600 ? 480 : window.innerWidth - 40);
 
   useEffect(() => {
@@ -59,13 +59,13 @@ function App() {
     socketRef.current = io(socketUrl, {
       transports: getTransports(socketUrl), // Elegir transporte según host
       reconnection: true,
-      reconnectionAttempts: 5,
-      pingInterval: 20000, // El cliente envía un ping cada 20 segundos
-      pingTimeout: 30000   // El cliente espera 30 segundos por un pong
+      reconnectionAttempts: 10,
+      reconnectionDelay: 2000,
+      timeout: 20000
     });
 
     socketRef.current.on('connect', () => {
-      console.log('✅ Conectado al servidor con ID:', socketRef.current.id);
+      console.log('✅ Conectado a:', socketUrl, 'ID:', socketRef.current.id);
       setConnectionStatus('Conectado');
       // console.log('Current socket instance:', socketRef.current); // Para depuración avanzada
     });
@@ -87,6 +87,7 @@ function App() {
 
     // Capturar errores para saber qué está pasando realmente
     socketRef.current.on('connect_error', (err) => {
+      console.error("❌ Error de conexión Socket.IO:", err.message);
       setConnectionStatus(`Error: ${err.message}`);
     });
 
@@ -114,7 +115,8 @@ function App() {
   }, [game]);
 
   function makeAIMove(currentGame) {
-    const g = new Chess(currentGame.fen());
+    const g = new Chess();
+    g.loadPgn(currentGame.pgn());
     if (g.isGameOver()) return;
 
     const move = getBestMove(g, Number(dificultad));
@@ -157,7 +159,8 @@ function App() {
   }
 
   function onDrop(sourceSquare, targetSquare) {
-    const g = new Chess(game.fen());
+    const g = new Chess();
+    g.loadPgn(game.pgn());
     if (g.isGameOver()) return false;
 
     // CORRECCIÓN: Comparar correctamente el turno ('w'/'b') con el color elegido ('white'/'black')
@@ -173,8 +176,8 @@ function App() {
     const move = g.move({ from: sourceSquare, to: targetSquare, promotion: 'q' });
     if (move === null) return false;
 
+    setGame(g);
     const newFen = g.fen();
-    setGame(new Chess(newFen));
 
     if (isOnline && socketRef.current && roomId) {
       console.log('📤 Enviando movimiento a la sala:', roomId);
@@ -193,13 +196,15 @@ function App() {
   function retroceder() {
     if (isOnline) return;
 
-    const g = new Chess(game.fen());
-    const historyLength = g.history().length;
-    if (historyLength < 2) return;
-
-    g.undo();
-    g.undo();
-    setGame(g);
+    // Creamos una copia que herede el historial completo
+    const gameCopy = new Chess();
+    gameCopy.loadPgn(game.pgn());
+    
+    if (gameCopy.history().length >= 2) {
+      gameCopy.undo(); // Deshace movimiento IA
+      gameCopy.undo(); // Deshace movimiento Jugador
+      setGame(gameCopy);
+    }
   }
 
   function resetGame() {
