@@ -168,11 +168,12 @@ function App() {
   }
 
   function handleJoinRoom() {
+    const cleanId = roomId.trim();
     if (!socketRef.current || !cleanId) return;
     setRoomId(cleanId);
     socketRef.current.emit('join_sala', cleanId);
     console.log('🔌 Intento de unión a sala:', cleanId);
-    setConnectionStatus(`Unido a sala ${cleanId}`);
+    setConnectionStatus(`Unido a sala: ${cleanId}`);
     setRematchStatus('none');
   }
 
