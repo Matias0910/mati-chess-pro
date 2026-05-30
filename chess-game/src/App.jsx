@@ -159,7 +159,7 @@ function App() {
 
   function handleCreateRoom() {
     if (!socketRef.current) return;
-    const newRoom = Math.random().toString(36).slice(2, 9).trim();
+    const newRoom = Math.random().toString(36).slice(2, 9).trim().toLowerCase();
     setRoomId(newRoom);
     socketRef.current.emit('join_sala', newRoom);
     console.log('🏠 Sala creada y emitida:', newRoom);
@@ -168,11 +168,11 @@ function App() {
   }
 
   function handleJoinRoom() {
-    const cleanId = roomId.trim();
+    const cleanId = roomId.trim().toLowerCase();
     if (!socketRef.current || !cleanId) return;
     setRoomId(cleanId);
     socketRef.current.emit('join_sala', cleanId);
-    console.log('🔌 Intento de unión a sala:', cleanId);
+    console.log('🔌 Unido a sala:', cleanId);
     setConnectionStatus(`Unido a sala: ${cleanId}`);
     setRematchStatus('none');
   }
@@ -232,19 +232,19 @@ function App() {
   }
 
   function handleAcceptRematch() {
-    const currentRoom = roomIdRef.current;
-    if (isOnline && currentRoom && socketRef.current) {
-      socketRef.current.emit('aceptar_revancha', currentRoom);
+    // Usamos el estado roomId directamente para mayor fiabilidad en la UI
+    if (isOnline && roomId && socketRef.current) {
+      socketRef.current.emit('aceptar_revancha', roomId.trim().toLowerCase());
       setRematchStatus('none');
     }
   }
 
   function resetGame() {
     if (isOnline) {
-      const currentRoom = roomIdRef.current;
-      if (currentRoom && socketRef.current) {
-        console.log("🔄 Solicitando revancha a sala:", currentRoom);
-        socketRef.current.emit('solicitar_revancha', currentRoom);
+      const cleanId = roomId.trim().toLowerCase();
+      if (cleanId && socketRef.current) {
+        console.log("🔄 Solicitando revancha a sala:", cleanId);
+        socketRef.current.emit('solicitar_revancha', cleanId);
         setRematchStatus('sent');
       } else {
         alert("Primero debés crear o unirte a una sala.");
