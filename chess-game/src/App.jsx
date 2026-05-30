@@ -7,7 +7,11 @@ import { io } from 'socket.io-client';
 import './App.css';
 
 // Detecta automáticamente si estás en local o en producción
-const SOCKET_SERVER_URL = window.location.hostname === "localhost" 
+const isLocal = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1";
+
+// TIP: Si quieres probar tu código local contra el servidor de Render,
+// cambia 'isLocal' por 'false' momentáneamente.
+const SOCKET_SERVER_URL = isLocal 
   ? "http://localhost:3001" 
   : "https://mati-chess-pro.onrender.com";
 
@@ -59,6 +63,7 @@ function App() {
       console.log('📥 Movimiento recibido desde el oponente:', fen);
       const g = new Chess(fen);
       setGame(g);
+      setGame(new Chess(fen)); // Forzamos nueva instancia
     });
 
     // Capturar errores para saber qué está pasando realmente
@@ -86,7 +91,7 @@ function App() {
       setStatus(`Turno de ${g.turn() === 'w' ? 'Blancas' : 'Negras'}`);
     }
 
-    setHistory(game.history());
+    setHistory(g.history()); // Usamos la instancia local 'g' que es más fiable
   }, [game]);
 
   function makeAIMove(currentGame) {
@@ -134,16 +139,27 @@ function App() {
 
   function onDrop(sourceSquare, targetSquare) {
     const g = new Chess(game.fen());
-    if (isOnline && g.turn() !== playerColor) return false;
+    if (g.isGameOver()) return false;
+
+    // CORRECCIÓN: Comparar correctamente el turno ('w'/'b') con el color elegido ('white'/'black')
+    if (isOnline) {
+      const currentTurn = g.turn() === 'w' ? 'white' : 'black';
+      if (currentTurn !== playerColor) {
+        console.warn(`🚫 No es tu turno. Eres ${playerColor} y el turno es de ${currentTurn}`);
+        return false;
+      }
+      if (!roomId) return false; // No permitir mover si no hay una sala activa
+    }
 
     const move = g.move({ from: sourceSquare, to: targetSquare, promotion: 'q' });
     if (move === null) return false;
 
-    setGame(g);
+    const newFen = g.fen();
+    setGame(new Chess(newFen));
 
     if (isOnline && socketRef.current && roomId) {
       console.log('📤 Enviando movimiento a la sala:', roomId);
-      socketRef.current.emit('mover_pieza', { idSala: roomId, nuevoTablero: g.fen() });
+      socketRef.current.emit('mover_pieza', { idSala: roomId, nuevoTablero: newFen });
     } else if (!isOnline) {
       setTimeout(() => {
         if (!g.isGameOver()) {
