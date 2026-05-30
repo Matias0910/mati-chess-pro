@@ -150,7 +150,8 @@ function App() {
     const g = new Chess();
     setGame(g);
 
-    if (!isOnline && playerColor === 'black') {
+    // Usamos la ref para evitar cierres estancados en el listener del socket
+    if (!isOnlineRef.current && playerColor === 'black') {
       setTimeout(() => {
         makeAIMove(g);
       }, 100);
@@ -232,16 +233,18 @@ function App() {
   }
 
   function handleAcceptRematch() {
-    // Usamos el estado roomId directamente para mayor fiabilidad en la UI
-    if (isOnline && roomId && socketRef.current) {
-      socketRef.current.emit('aceptar_revancha', roomId.trim().toLowerCase());
+    const currentRoom = roomIdRef.current || roomId;
+    if (isOnline && currentRoom && socketRef.current) {
+      socketRef.current.emit('aceptar_revancha', currentRoom.trim().toLowerCase());
       setRematchStatus('none');
     }
   }
 
   function resetGame() {
     if (isOnline) {
-      const cleanId = roomId.trim().toLowerCase();
+      const currentRoom = roomIdRef.current || roomId;
+      const cleanId = currentRoom?.trim().toLowerCase();
+      
       if (cleanId && socketRef.current) {
         console.log("🔄 Solicitando revancha a sala:", cleanId);
         socketRef.current.emit('solicitar_revancha', cleanId);
