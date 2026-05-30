@@ -40,6 +40,7 @@ function App() {
   const [playerColor, setPlayerColor] = useState('white');
   const [isOnline, setIsOnline] = useState(false);
   const [connectionStatus, setConnectionStatus] = useState('Esperando conexión...');
+  const [rematchStatus, setRematchStatus] = useState('none'); // 'none', 'sent', 'received'
   const [boardWidth, setBoardWidth] = useState(window.innerWidth > 600 ? 480 : window.innerWidth - 40);
 
   useEffect(() => {
@@ -82,6 +83,15 @@ function App() {
       } catch (err) {
         console.error("Error al sincronizar el tablero:", err);
       }
+    });
+
+    socketRef.current.on('propuesta_revancha', () => {
+      setRematchStatus('received');
+    });
+
+    socketRef.current.on('reiniciar_juego', () => {
+      startNewGame();
+      setRematchStatus('none');
     });
 
     // Capturar errores para saber qué está pasando realmente
@@ -211,8 +221,20 @@ function App() {
     }
   }
 
+  function handleAcceptRematch() {
+    if (isOnline && roomId && socketRef.current) {
+      socketRef.current.emit('aceptar_revancha', roomId);
+    }
+  }
+
   function resetGame() {
-    if (isOnline) return;
+    if (isOnline) {
+      if (roomId && socketRef.current) {
+        socketRef.current.emit('solicitar_revancha', roomId);
+        setRematchStatus('sent');
+      }
+      return;
+    }
     startNewGame();
   }
 
@@ -250,7 +272,13 @@ function App() {
         </select>
 
         <button className="neon-btn" onClick={retroceder} disabled={isOnline}>Retroceder</button>
-        <button className="neon-btn" onClick={resetGame} disabled={isOnline}>Nuevo Juego</button>
+        <button 
+          className="neon-btn" 
+          onClick={resetGame} 
+          disabled={isOnline && rematchStatus === 'sent'}
+        >
+          {isOnline && rematchStatus === 'sent' ? 'Esperando...' : 'Nuevo Juego'}
+        </button>
       </div>
 
       {isOnline && (
@@ -268,6 +296,11 @@ function App() {
           <div className="connection-status">
             <p>{connectionStatus} {roomId && <span onClick={handleCopyRoomId} style={{cursor: 'pointer', textDecoration: 'underline'}}> (Copiar ID)</span>}</p>
             <p>{`Color: ${playerColor === 'white' ? 'Blancas' : 'Negras'}`}</p>
+            {rematchStatus === 'received' && (
+              <button className="neon-btn" style={{marginTop: '10px', borderColor: '#ff00d4', boxShadow: '0 0 10px #ff00d4'}} onClick={handleAcceptRematch}>
+                Aceptar Revancha
+              </button>
+            )}
           </div>
         </div>
       )}

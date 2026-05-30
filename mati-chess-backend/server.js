@@ -40,6 +40,18 @@ io.on('connection', (socket) => {
     socket.to(idSala).emit('movimiento_recibido', nuevoTablero);
   });
 
+  // Petición de revancha
+  socket.on('solicitar_revancha', (idSala) => {
+    console.log(`🔄 Revancha solicitada en sala: ${idSala}`);
+    socket.to(idSala).emit('propuesta_revancha');
+  });
+
+  // Aceptación de revancha
+  socket.on('aceptar_revancha', (idSala) => {
+    console.log(`✅ Revancha aceptada en sala: ${idSala}`);
+    io.in(idSala).emit('reiniciar_juego');
+  });
+
   socket.on('disconnect', () => {
     console.log('❌ USUARIO DESCONECTADO - ID:', socket.id);
   });
