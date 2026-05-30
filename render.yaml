@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: mati-chess-backend
+    env: node
+    plan: free
+    branch: main
+    buildCommand: ""
+    startCommand: "node server.js"
+    root: mati-chess-backend
+    envVars:
+      - key: PORT
+        value: "3001"
+        sync: false

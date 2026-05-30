@@ -1,0 +1,13 @@
+{
+  "version": 2,
+  "builds": [
+    {
+      "src": "chess-game/package.json",
+      "use": "@vercel/static-build",
+      "config": { "distDir": "chess-game/dist" }
+    }
+  ],
+  "routes": [
+    { "src": "/(.*)", "dest": "/chess-game/$1" }
+  ]
+}

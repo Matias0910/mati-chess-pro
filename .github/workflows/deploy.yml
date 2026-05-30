@@ -1,0 +1,67 @@
+name: Build and Deploy
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  build-frontend:
+    name: Build frontend
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+      - name: Install frontend deps
+        working-directory: ./chess-game
+        run: npm ci
+      - name: Build frontend
+        working-directory: ./chess-game
+        run: npm run build
+      - name: Upload dist
+        uses: actions/upload-artifact@v4
+        with:
+          name: chess-game-dist
+          path: chess-game/dist
+
+  deploy-vercel:
+    name: Deploy to Vercel (optional)
+    runs-on: ubuntu-latest
+    needs: build-frontend
+    if: ${{ secrets.VERCEL_TOKEN && secrets.VERCEL_PROJECT_ID }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Vercel CLI
+        run: npm install -g vercel
+      - name: Deploy to Vercel
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: |
+          cd chess-game
+          vercel --prod --token "$VERCEL_TOKEN" --confirm --local-config ../vercel.json
+
+  deploy-render:
+    name: Trigger Render deploy (optional)
+    runs-on: ubuntu-latest
+    needs: build-frontend
+    if: ${{ secrets.RENDER_API_KEY && secrets.RENDER_SERVICE_ID }}
+    steps:
+      - name: Trigger deploy via Render API
+        env:
+          RENDER_API_KEY: ${{ secrets.RENDER_API_KEY }}
+          RENDER_SERVICE_ID: ${{ secrets.RENDER_SERVICE_ID }}
+        run: |
+          echo "Triggering Render deploy for service $RENDER_SERVICE_ID"
+          curl -X POST \
+            -H "Content-Type: application/json" \
+            -H "Authorization: Bearer $RENDER_API_KEY" \
+            -d '{"clearCache":true}' \
+            "https://api.render.com/deploy/srv-$RENDER_SERVICE_ID"
+
+# Secrets required to enable automated deploys from this workflow:
+# - VERCEL_TOKEN: token from Vercel (optional, required for Vercel deploy step)
+# - VERCEL_PROJECT_ID: project id/alias (optional)
+# - RENDER_API_KEY: Render API key with permission to trigger deploys (optional)
+# - RENDER_SERVICE_ID: the numeric id of the Render service (without prefix)

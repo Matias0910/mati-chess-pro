@@ -5,6 +5,9 @@ const { Server } = require('socket.io');
 
 const server = http.createServer(app);
 
+app.get('/', (req, res) => res.send('Chess backend running'));
+app.get('/health', (req, res) => res.json({ status: 'ok', source: 'mati-chess-backend' }));
+
 // Configuración de CORS para que tu frontend en Vercel pueda conectar
 const io = new Server(server, {
   cors: {
@@ -26,15 +29,11 @@ io.on('connection', (socket) => {
 
   // Recibe el movimiento y lo reenvía a los demás en la sala
   socket.on('mover_pieza', (data) => {
-    const { idSala, nuevoTablero } = data;
-    if (!idSala || !nuevoTablero) return;
     if (!data || !data.idSala || !data.nuevoTablero) return;
-    
+    const { idSala, nuevoTablero } = data;
+
     console.log(`📦 MOVIMIENTO RECIBIDO - Sala: ${idSala} - Enviando a otros...`);
-    console.log(`📦 MOVIMIENTO en sala [${data.idSala}]`);
-    // Enviamos a todos en la sala EXCEPTO al que hizo el movimiento
     socket.to(idSala).emit('movimiento_recibido', nuevoTablero);
-    socket.to(data.idSala).emit('movimiento_recibido', data.nuevoTablero);
   });
 
   socket.on('disconnect', () => {

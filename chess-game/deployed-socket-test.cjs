@@ -1,0 +1,12 @@
+const { io } = require('socket.io-client');
+const url='https://mati-chess-backend.vercel.app';
+let received=false;
+const room='deployed-test-123';
+const clientB=io(url,{transports:['polling','websocket'],timeout:10000});
+const clientA=io(url,{transports:['polling','websocket'],timeout:10000});
+clientB.on('connect',()=>{clientB.emit('join_sala',room);});
+clientB.on('movimiento_recibido',(fen)=>{console.log('B received',fen); received=true; clientA.close(); clientB.close(); process.exit(0);});
+clientA.on('connect',()=>{clientA.emit('join_sala',room); setTimeout(()=>{const fen='rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq - 0 1'; clientA.emit('mover_pieza',{idSala:room,nuevoTablero:fen}); console.log('A emitted',fen);},1000);});
+clientA.on('connect_error',err=>{console.error('A error',err.message);process.exit(1);});
+clientB.on('connect_error',err=>{console.error('B error',err.message);process.exit(1);});
+setTimeout(()=>{ if(!received){ console.error('No message received after timeout'); process.exit(1);} },10000);

@@ -9,11 +9,26 @@ import './App.css';
 // Detecta automáticamente si estás en local o en producción
 const isLocal = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1";
 
-// TIP: Si quieres probar tu código local contra el servidor de Render,
-// cambia 'isLocal' por 'false' momentáneamente.
-const SOCKET_SERVER_URL = isLocal 
-  ? "http://localhost:3001" 
-  : "https://mati-chess-pro.onrender.com";
+// Obtener la URL del socket en tiempo de ejecución.
+function getSocketUrl() {
+  // Override desde la consola: `window.__VITE_SOCKET_URL__ = 'https://...'`
+  if (typeof window !== 'undefined' && window.__VITE_SOCKET_URL__) return window.__VITE_SOCKET_URL__;
+  // Preferir la variable de entorno Vite si fue definida al build/dev
+  if (import.meta.env && import.meta.env.VITE_SOCKET_URL) return import.meta.env.VITE_SOCKET_URL;
+  // Solo fallback local si no hay backend público configurado.
+  return "http://localhost:3001";
+}
+
+function getTransports(url) {
+  if (!url) return ['polling', 'websocket'];
+  try {
+    const u = url.toLowerCase();
+    if (u.includes('vercel.app') || u.includes('render.com') || u.includes('loca.lt') || u.includes('ngrok.io')) {
+      return ['polling'];
+    }
+  } catch (e) {}
+  return ['polling', 'websocket'];
+}
 
 function App() {
   const [game, setGame] = useState(() => new Chess());
@@ -40,8 +55,9 @@ function App() {
 
   useEffect(() => {
     // Añadimos transports para evitar problemas de polling en algunos navegadores/hostings
-    socketRef.current = io(SOCKET_SERVER_URL, {
-      transports: ['polling', 'websocket'], // Permitimos polling primero para mayor compatibilidad
+    const socketUrl = getSocketUrl();
+    socketRef.current = io(socketUrl, {
+      transports: getTransports(socketUrl), // Elegir transporte según host
       reconnection: true,
       reconnectionAttempts: 5,
       pingInterval: 20000, // El cliente envía un ping cada 20 segundos
@@ -61,9 +77,12 @@ function App() {
     
     socketRef.current.on('movimiento_recibido', (fen) => {
       console.log('📥 Movimiento recibido desde el oponente:', fen);
-      const g = new Chess(fen);
-      setGame(g);
-      setGame(new Chess(fen)); // Forzamos nueva instancia
+      try {
+        const g = new Chess(fen);
+        setGame(g);
+      } catch (err) {
+        console.error("Error al sincronizar el tablero:", err);
+      }
     });
 
     // Capturar errores para saber qué está pasando realmente
