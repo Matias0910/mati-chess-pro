@@ -86,8 +86,13 @@ function App() {
 
     // Capturar errores para saber qué está pasando realmente
     socketRef.current.on('connect_error', (err) => {
-      console.error("❌ Error de conexión Socket.IO:", err.message);
-      setConnectionStatus(`Error: ${err.message}`);
+      console.error("❌ Error de conexión:", err.message);
+      // Si el error es de transporte, es probable que el servidor esté arrancando en Render
+      if (err.message.includes('xhr poll error') || err.message.includes('timeout')) {
+        setConnectionStatus('Despertando servidor en la nube... (espera 1 min)');
+      } else {
+        setConnectionStatus(`Error: ${err.message}`);
+      }
     });
 
     return () => {
