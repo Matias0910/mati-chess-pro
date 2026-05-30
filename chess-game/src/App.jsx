@@ -162,6 +162,7 @@ function App() {
     if (!socketRef.current) return;
     const newRoom = Math.random().toString(36).slice(2, 9).trim().toLowerCase();
     setRoomId(newRoom);
+    roomIdRef.current = newRoom;
     socketRef.current.emit('join_sala', newRoom);
     console.log('🏠 Sala creada y emitida:', newRoom);
     setConnectionStatus(`Sala creada: ${newRoom}`);
@@ -172,6 +173,7 @@ function App() {
     const cleanId = roomId.trim().toLowerCase();
     if (!socketRef.current || !cleanId) return;
     setRoomId(cleanId);
+    roomIdRef.current = cleanId;
     socketRef.current.emit('join_sala', cleanId);
     console.log('🔌 Unido a sala:', cleanId);
     setConnectionStatus(`Unido a sala: ${cleanId}`);
@@ -234,8 +236,9 @@ function App() {
 
   function handleAcceptRematch() {
     const currentRoom = roomIdRef.current || roomId;
-    if (isOnline && currentRoom && socketRef.current) {
-      socketRef.current.emit('aceptar_revancha', currentRoom.trim().toLowerCase());
+    const cleanId = currentRoom?.trim().toLowerCase();
+    if (isOnline && cleanId && socketRef.current) {
+      socketRef.current.emit('aceptar_revancha', cleanId);
       setRematchStatus('none');
     }
   }
@@ -244,10 +247,11 @@ function App() {
     if (isOnline) {
       const currentRoom = roomIdRef.current || roomId;
       const cleanId = currentRoom?.trim().toLowerCase();
-      
-      if (cleanId && socketRef.current) {
+      const socket = socketRef.current;
+
+      if (cleanId && socket) {
         console.log("🔄 Solicitando revancha a sala:", cleanId);
-        socketRef.current.emit('solicitar_revancha', cleanId);
+        socket.emit('solicitar_revancha', cleanId);
         setRematchStatus('sent');
       } else {
         alert("Primero debés crear o unirte a una sala.");
@@ -290,8 +294,9 @@ function App() {
           <option value="online">Online</option>
         </select>
 
-        <button className="neon-btn" onClick={retroceder} disabled={isOnline}>Retroceder</button>
+        <button type="button" className="neon-btn" onClick={retroceder} disabled={isOnline}>Retroceder</button>
         <button 
+          type="button"
           className="neon-btn" 
           onClick={resetGame} 
           disabled={isOnline && rematchStatus === 'sent'}
@@ -309,14 +314,14 @@ function App() {
               placeholder="ID de sala"
               onChange={(e) => setRoomId(e.target.value)}
             />
-            <button className="neon-btn" onClick={handleCreateRoom}>Crear</button>
-            <button className="neon-btn" onClick={handleJoinRoom}>Unir</button>
+            <button type="button" className="neon-btn" onClick={handleCreateRoom}>Crear</button>
+            <button type="button" className="neon-btn" onClick={handleJoinRoom}>Unir</button>
           </div>
           <div className="connection-status">
             <p>{connectionStatus} {roomId && <span onClick={handleCopyRoomId} style={{cursor: 'pointer', textDecoration: 'underline'}}> (Copiar ID)</span>}</p>
             <p>{`Color: ${playerColor === 'white' ? 'Blancas' : 'Negras'}`}</p>
             {rematchStatus === 'received' && (
-              <button className="neon-btn" style={{marginTop: '10px', borderColor: '#ff00d4', boxShadow: '0 0 10px #ff00d4'}} onClick={handleAcceptRematch}>
+              <button type="button" className="neon-btn" style={{marginTop: '10px', borderColor: '#ff00d4', boxShadow: '0 0 10px #ff00d4'}} onClick={handleAcceptRematch}>
                 Aceptar Revancha
               </button>
             )}
