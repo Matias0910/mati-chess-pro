@@ -11,23 +11,22 @@ const isLocal = window.location.hostname === "localhost" || window.location.host
 
 // Obtener la URL del socket en tiempo de ejecución.
 function getSocketUrl() {
-  // Override desde la consola: `window.__VITE_SOCKET_URL__ = 'https://...'`
+  const envUrl = import.meta.env?.VITE_SOCKET_URL;
+
+  if (envUrl && envUrl.trim() !== "" && !envUrl.includes("example")) {
+    console.log("🌐 Conectando al servidor en:", envUrl);
+    return envUrl;
+  }
+
   if (typeof window !== 'undefined' && window.__VITE_SOCKET_URL__) return window.__VITE_SOCKET_URL__;
-  // Preferir la variable de entorno Vite si fue definida al build/dev
-  if (import.meta.env && import.meta.env.VITE_SOCKET_URL) return import.meta.env.VITE_SOCKET_URL;
-  // Solo fallback local si no hay backend público configurado.
+
+  console.warn("⚠️ VITE_SOCKET_URL no definida. Usando fallback local.");
   return "http://localhost:3001";
 }
 
 function getTransports(url) {
-  if (!url) return ['polling', 'websocket'];
-  try {
-    const u = url.toLowerCase();
-    if (u.includes('vercel.app') || u.includes('render.com') || u.includes('loca.lt') || u.includes('ngrok.io')) {
-      return ['polling'];
-    }
-  } catch (e) {}
-  return ['polling', 'websocket'];
+  // Intentar WebSocket primero es mucho más estable en 4G/5G
+  return ['websocket', 'polling'];
 }
 
 function App() {
